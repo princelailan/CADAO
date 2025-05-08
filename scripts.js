@@ -1,5 +1,33 @@
 /* scripts.js - Shared JavaScript for all pages */
 
+/**
+ * EmailJS Setup Instructions for cadao.development@gmail.com:
+ * 1. Sign up at https://www.emailjs.com/ and log in.
+ * 2. Add a service:
+ *    - Choose Gmail or your preferred email provider.
+ *    - Note the Service ID (e.g., service_xxxxxxx).
+ * 3. Create an email template:
+ *    - Go to Email Templates and create a new template.
+ *    - Use fields: {{from_name}}, {{from_email}}, {{message}}, {{reply_to}}.
+ *    - Set the recipient email to cadao.development@gmail.com.
+ *    - Note the Template ID (e.g., template_xxxxxxx).
+ * 4. Get your User ID:
+ *    - Find it in your EmailJS dashboard under Account > API Keys (e.g., user_xxxxxxx).
+ * 5. Update this file:
+ *    - Replace YOUR_EMAILJS_USER_ID with your User ID.
+ *    - Replace YOUR_SERVICE_ID with your Service ID.
+ *    - Replace YOUR_TEMPLATE_ID with your Template ID.
+ * 6. Test the form:
+ *    - Load the contact page in a browser.
+ *    - Submit the form and check the console for logs.
+ *    - Verify that emails arrive at cadao.development@gmail.com.
+ * 7. Debug issues:
+ *    - Check console logs for errors.
+ *    - Ensure EmailJS credentials are correct.
+ *    - Verify Gmail settings allow EmailJS (check spam/junk folder).
+ */
+emailjs.init("YOUR_EMAILJS_USER_ID"); // Replace with your EmailJS User ID
+
 // Navbar scroll effect
 window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
@@ -46,7 +74,7 @@ const validateForm = (name, email, message) => {
     return null;
 };
 
-// Contact form handling for mailto
+// Contact form submission
 const setupContactForm = () => {
     const form = document.querySelector('#contactForm');
     const sendButton = document.querySelector('#sendButton');
@@ -63,7 +91,7 @@ const setupContactForm = () => {
         const email = form.querySelector('input[name="email"]').value.trim();
         const message = form.querySelector('textarea[name="message"]').value.trim();
 
-        console.log('Form submission attempt:', { name, email, message }); // Debug: Log form data
+        console.log('Form submission attempt:', { name, email, message, to: 'cadao.development@gmail.com' }); // Debug: Log form data
 
         // Validate form inputs
         const validationError = validateForm(name, email, message);
@@ -76,31 +104,33 @@ const setupContactForm = () => {
         // Disable button and show loading state
         sendButton.disabled = true;
         sendButton.classList.add('loading');
-        sendButton.textContent = 'Opening Email...';
+        sendButton.textContent = 'Sending...';
         formMessage.textContent = '';
 
-        // Construct mailto URL
-        const subject = encodeURIComponent('Contact Form Submission from ' + name);
-        const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
-        const mailtoUrl = `mailto:cadao.development@gmail.com?subject=${subject}&body=${body}`;
-
-        try {
-            // Open email client
-            window.location.href = mailtoUrl;
-            formMessage.textContent = 'Opening your email client. Please send the email.';
+        // Send email via EmailJS
+        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+            from_name: name,
+            from_email: email,
+            message: message,
+            reply_to: email
+        })
+        .then((response) => {
+            formMessage.textContent = 'Message sent successfully! We will get back to you soon.';
             formMessage.className = 'form-message success';
             form.reset();
-            console.log('Mailto URL opened:', mailtoUrl); // Debug: Log mailto URL
-        } catch (error) {
-            formMessage.textContent = 'Failed to open email client. Please try again.';
+            console.log('Email sent successfully to cadao.development@gmail.com:', response); // Debug: Log success
+        })
+        .catch(error => {
+            formMessage.textContent = 'Failed to send message. Please try again later.';
             formMessage.className = 'form-message error';
-            console.error('Mailto error:', error); // Debug: Log error
-        } finally {
+            console.error('EmailJS error:', error); // Debug: Log error
+        })
+        .finally(() => {
             // Re-enable button and reset text
             sendButton.disabled = false;
             sendButton.classList.remove('loading');
             sendButton.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
-        }
+        });
     });
 };
 
