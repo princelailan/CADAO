@@ -105,9 +105,10 @@ const setupContactForm = () => {
 
         try {
             // Attempt to open email client
-            const link = document.createElement('a');
-            link.href = mailtoUrl;
-            link.click();
+            const opened = window.open(mailtoUrl, '_blank');
+            if (!opened) {
+                throw new Error('Window open failed');
+            }
             formMessage.innerHTML = 'Opening your email client. Please press "Send" to submit the email.<br>If nothing happens, copy this and email <a href="mailto:cadao.development@gmail.com">cadao.development@gmail.com</a>:<br><pre>To: cadao.development@gmail.com\nSubject: Contact Form Submission from ' + name + '\n\nName: ' + name + '\nEmail: ' + email + '\n\nMessage:\n' + message + '</pre>';
             formMessage.className = 'form-message success';
             form.reset();
