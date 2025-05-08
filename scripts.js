@@ -2,13 +2,14 @@
 
 /**
  * Contact Form Functionality:
- * - On submission, opens the user's default email client (e.g., Gmail, Outlook) with a pre-filled email.
+ * - On submission, attempts to open the user's default email client (e.g., Gmail, Outlook) with a pre-filled email.
  * - Email details:
  *   To: cadao.development@gmail.com
  *   Subject: Contact Form Submission from [Name]
  *   Body: Name: [name]\nEmail: [email]\n\nMessage: [message]
  * - Users must press "Send" in their email client to send the email.
- * - Form validation ensures valid inputs before opening the email client.
+ * - If the email client fails to open, displays the email content for manual copying.
+ * - Form validation ensures valid inputs before processing.
  * - No external services or APIs are used.
  */
 
@@ -50,12 +51,15 @@ const animateCards = () => {
 const validateForm = (name, email, message) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!name || name.trim().length < 2) {
+        console.warn('Validation failed: Name is empty or too short');
         return 'Name must be at least 2 characters long.';
     }
     if (!email || !emailRegex.test(email.trim())) {
+        console.warn('Validation failed: Invalid or empty email');
         return 'Please enter a valid email address.';
     }
     if (!message || message.trim().length < 10) {
+        console.warn('Validation failed: Message is empty or too short');
         return 'Message must be at least 10 characters long.';
     }
     return null;
@@ -68,7 +72,7 @@ const setupContactForm = () => {
     const formMessage = document.querySelector('#formMessage');
 
     if (!form || !sendButton || !formMessage) {
-        console.warn('Contact form elements not found:', { form, sendButton, formMessage });
+        console.error('Contact form elements not found:', { form, sendButton, formMessage });
         return;
     }
 
@@ -77,6 +81,8 @@ const setupContactForm = () => {
         const name = form.querySelector('input[name="name"]').value.trim();
         const email = form.querySelector('input[name="email"]').value.trim();
         const message = form.querySelector('textarea[name="message"]').value.trim();
+
+        console.log('Form submission attempt:', { name, email, message, to: 'cadao.development@gmail.com' });
 
         // Validate form inputs
         const validationError = validateForm(name, email, message);
@@ -98,14 +104,18 @@ const setupContactForm = () => {
         const mailtoUrl = `mailto:cadao.development@gmail.com?subject=${subject}&body=${body}`;
 
         try {
-            // Open email client
-            window.location.href = mailtoUrl;
-            formMessage.textContent = 'Opening your email client. Please press "Send" to submit the email.';
+            // Attempt to open email client
+            const link = document.createElement('a');
+            link.href = mailtoUrl;
+            link.click();
+            formMessage.innerHTML = 'Opening your email client. Please press "Send" to submit the email.<br>If nothing happens, copy this and email <a href="mailto:cadao.development@gmail.com">cadao.development@gmail.com</a>:<br><pre>To: cadao.development@gmail.com\nSubject: Contact Form Submission from ' + name + '\n\nName: ' + name + '\nEmail: ' + email + '\n\nMessage:\n' + message + '</pre>';
             formMessage.className = 'form-message success';
             form.reset();
+            console.log('Mailto URL triggered:', mailtoUrl);
         } catch (error) {
-            formMessage.textContent = 'Failed to open email client. Please email cadao.development@gmail.com directly with your message.';
+            formMessage.innerHTML = 'Failed to open email client. Please copy this and email <a href="mailto:cadao.development@gmail.com">cadao.development@gmail.com</a>:<br><pre>To: cadao.development@gmail.com\nSubject: Contact Form Submission from ' + name + '\n\nName: ' + name + '\nEmail: ' + email + '\n\nMessage:\n' + message + '</pre>';
             formMessage.className = 'form-message error';
+            console.error('Mailto error:', error);
         } finally {
             // Re-enable button and reset text
             sendButton.disabled = false;
@@ -117,6 +127,7 @@ const setupContactForm = () => {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Page loaded, initializing scripts');
     animateCards();
     setupContactForm();
 });
